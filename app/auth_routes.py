@@ -14,8 +14,15 @@ auth_router = APIRouter(
 session = Session(bind=engine)
 
 
-@auth_router.get("/")
-async def hello():
+@auth_router.get("/", tags=["auth"])
+async def hello(Authorize: AuthJWT = Depends()):
+    try:
+        Authorize.jwt_required()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Token"
+        )
     return {"message": "Hello World"}
 
 
@@ -71,3 +78,21 @@ async def login(user: LoginModel, Authorize: AuthJWT = Depends()):
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Invalid Username or Password"
     )
+
+
+# refreshing Token
+@auth_router.get("/refresh")
+async def refresh_token(Authorize: AuthJWT = Depends()):
+    try:
+        Authorize.jwt_refresh_token_required()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Please provide a valid refresh token"
+        )
+
+    current_user = Authorize.get_jwt_subject()
+
+    access_token = Authorize.create_access_token(subject=current_user)
+
+    return jsonable_encoder({"access": access_token})
