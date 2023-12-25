@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from ..db.database import Session, engine
 from ..db.schemas import SignUpModel, LoginModel
 from ..model.models import User
@@ -14,8 +14,7 @@ auth_router = APIRouter(
 session = Session(bind=engine)
 
 
-
-@auth_router.get("/", tags=["auth"])
+@auth_router.get("/")
 async def hello(authorize: AuthJWT = Depends()):
     """
     ## This just return Hello world
@@ -72,29 +71,34 @@ async def signup(user: SignUpModel):
 # login route
 @auth_router.post("/login", status_code=200)
 async def login(user: LoginModel, authorize: AuthJWT = Depends()):
+
+    print(user)
+    # da = await request.form()
+    # print(da.get("username"))
+
     """
     ## This User Login Service
     It requires belong parameters
     - username : "username"
     - password : "password"
     """
-    db_user = session.query(User).filter(User.username == user.username).first()
-
-    if db_user and check_password_hash(db_user.password, user.password):
-        access_token = authorize.create_access_token(subject=db_user.username)
-        refresh_token = authorize.create_refresh_token(subject=db_user.username)
-
-        response = {
-            "access": access_token,
-            "refresh": refresh_token
-        }
-
-        return jsonable_encoder(response)
-
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Invalid Username or Password"
-    )
+    # db_user = session.query(User).filter(User.username == user.username).first()
+    #
+    # if db_user and check_password_hash(db_user.password, user.password):
+    #     access_token = authorize.create_access_token(subject=db_user.username)
+    #     refresh_token = authorize.create_refresh_token(subject=db_user.username)
+    #
+    #     response = {
+    #         "access": access_token,
+    #         "refresh": refresh_token
+    #     }
+    #
+    #     return jsonable_encoder(response)
+    #
+    # raise HTTPException(
+    #     status_code=status.HTTP_400_BAD_REQUEST,
+    #     detail="Invalid Username or Password"
+    # )
 
 
 # refreshing Token

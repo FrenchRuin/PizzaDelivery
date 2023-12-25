@@ -1,15 +1,40 @@
 from app.routers.auth_routes import auth_router
 from app.routers.order_routes import order_router
+from app.routers.page_routes import page_router
 from fastapi_jwt_auth import AuthJWT
 from app.db.schemas import Settings
+from starlette.middleware.cors import CORSMiddleware
 import inspect, re
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.openapi.utils import get_openapi
 
 app = FastAPI()
+app.include_router(auth_router)
+app.include_router(order_router)
+app.include_router(page_router)
 
 
+# CORS Setting
+origins = [
+    "http://localhost:8080",
+    "*"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@AuthJWT.load_config
+def get_config():
+    return Settings()
+
+
+# Swagger UI JWT Token Setting
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -56,12 +81,3 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi
-
-
-@AuthJWT.load_config
-def get_config():
-    return Settings()
-
-
-app.include_router(auth_router)
-app.include_router(order_router)
