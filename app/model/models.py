@@ -1,4 +1,4 @@
-from database import Base
+from ..db.database import Base
 from sqlalchemy import Column, Integer, Boolean, Text, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils import ChoiceType
@@ -16,7 +16,7 @@ class User(Base):
     orders = relationship("Order", back_populates="user")
 
     def __repr__(self):
-        return f"<User {self.username}>"
+        return f"<User username = '{self.username}'>"
 
 
 class Order(Base):
@@ -43,4 +43,4 @@ class Order(Base):
     user = relationship("User", back_populates="orders")
 
     def __repr__(self):
-        return f"<Order {self.id}"
+        return f"<Order id = '{self.id}'>"

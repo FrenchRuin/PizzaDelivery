@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from database import Session, engine
-from schemas import SignUpModel, LoginModel
-from models import User
+from ..db.database import Session, engine
+from ..db.schemas import SignUpModel, LoginModel
+from ..model.models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from fastapi_jwt_auth import AuthJWT
 from fastapi.encoders import jsonable_encoder
@@ -14,10 +14,15 @@ auth_router = APIRouter(
 session = Session(bind=engine)
 
 
+
 @auth_router.get("/", tags=["auth"])
-async def hello(Authorize: AuthJWT = Depends()):
+async def hello(authorize: AuthJWT = Depends()):
+    """
+    ## This just return Hello world
+    It requires JWT Auth
+    """
     try:
-        Authorize.jwt_required()
+        authorize.jwt_required()
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -28,6 +33,12 @@ async def hello(Authorize: AuthJWT = Depends()):
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(user: SignUpModel):
+    """
+    ## This Sign Up User
+    It requires belong parameters
+    - username : "user"
+    - password : "password"
+    """
     db_email = session.query(User).filter(User.email == user.email).first()
 
     if db_email is not None:
@@ -60,12 +71,18 @@ async def signup(user: SignUpModel):
 
 # login route
 @auth_router.post("/login", status_code=200)
-async def login(user: LoginModel, Authorize: AuthJWT = Depends()):
+async def login(user: LoginModel, authorize: AuthJWT = Depends()):
+    """
+    ## This User Login Service
+    It requires belong parameters
+    - username : "username"
+    - password : "password"
+    """
     db_user = session.query(User).filter(User.username == user.username).first()
 
     if db_user and check_password_hash(db_user.password, user.password):
-        access_token = Authorize.create_access_token(subject=db_user.username)
-        refresh_token = Authorize.create_refresh_token(subject=db_user.username)
+        access_token = authorize.create_access_token(subject=db_user.username)
+        refresh_token = authorize.create_refresh_token(subject=db_user.username)
 
         response = {
             "access": access_token,
@@ -82,17 +99,21 @@ async def login(user: LoginModel, Authorize: AuthJWT = Depends()):
 
 # refreshing Token
 @auth_router.get("/refresh")
-async def refresh_token(Authorize: AuthJWT = Depends()):
+async def refresh_token(authorize: AuthJWT = Depends()):
+    """
+    ## This is Token Refresh Service
+    It requires JWT Auth
+    """
     try:
-        Authorize.jwt_refresh_token_required()
+        authorize.jwt_refresh_token_required()
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Please provide a valid refresh token"
         )
 
-    current_user = Authorize.get_jwt_subject()
+    current_user = authorize.get_jwt_subject()
 
-    access_token = Authorize.create_access_token(subject=current_user)
+    access_token = authorize.create_access_token(subject=current_user)
 
     return jsonable_encoder({"access": access_token})
