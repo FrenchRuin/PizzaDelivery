@@ -28,7 +28,7 @@ class Order(Base):
         ("DELIVERED", "delivered"),
     )
 
-    PIZZA_SIZES = (
+    PIZZA_SIZE = (
         ("SMALL", "small"),
         ("MEDIUM", "medium"),
         ("LARGE", "large"),
@@ -38,7 +38,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True)  # pk
     quantity = Column(Integer, nullable=False)
     order_status = Column(ChoiceType(choices=ORDER_STATUS), default="PENDING")
-    pizza_sizes = Column(ChoiceType(choices=PIZZA_SIZES), default="SMALL")
+    pizza_size = Column(ChoiceType(choices=PIZZA_SIZE), default="SMALL")
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", back_populates="orders")
 
