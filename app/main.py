@@ -4,7 +4,7 @@ from app.routers.page_routes import page_router
 from fastapi_jwt_auth import AuthJWT
 from app.db.schemas import Settings
 from starlette.middleware.cors import CORSMiddleware
-import inspect, re
+import inspect, re, uvicorn
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.openapi.utils import get_openapi
@@ -13,7 +13,6 @@ app = FastAPI()
 app.include_router(auth_router)
 app.include_router(order_router)
 app.include_router(page_router)
-
 
 # CORS Setting
 origins = [
@@ -81,3 +80,6 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi
+
+if __name__ == '__main__':
+    uvicorn.run("main:app",host='0.0.0.0', port=8000, reload=True)

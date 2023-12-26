@@ -5,6 +5,7 @@ from ..model.models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from fastapi_jwt_auth import AuthJWT
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 
 auth_router = APIRouter(
     prefix='/auth',
@@ -70,35 +71,37 @@ async def signup(user: SignUpModel):
 
 # login route
 @auth_router.post("/login", status_code=200)
-async def login(user: LoginModel, authorize: AuthJWT = Depends()):
-
-    print(user)
-    # da = await request.form()
-    # print(da.get("username"))
-
+async def login(request: Request, authorize: AuthJWT = Depends()):
     """
     ## This User Login Service
     It requires belong parameters
     - username : "username"
     - password : "password"
     """
-    # db_user = session.query(User).filter(User.username == user.username).first()
-    #
-    # if db_user and check_password_hash(db_user.password, user.password):
-    #     access_token = authorize.create_access_token(subject=db_user.username)
-    #     refresh_token = authorize.create_refresh_token(subject=db_user.username)
-    #
-    #     response = {
-    #         "access": access_token,
-    #         "refresh": refresh_token
-    #     }
-    #
-    #     return jsonable_encoder(response)
-    #
-    # raise HTTPException(
-    #     status_code=status.HTTP_400_BAD_REQUEST,
-    #     detail="Invalid Username or Password"
-    # )
+    login_info = await request.form()
+    username = login_info.get("username")
+    password = login_info.get("password")
+
+    db_user = session.query(User).filter(User.username == username).first()
+
+    if db_user and check_password_hash(db_user.password, password):
+        access_token = authorize.create_access_token(subject=db_user.username)
+        refresh_token = authorize.create_refresh_token(subject=db_user.username)
+
+        tokens = {
+            "access": access_token,
+            "refresh": refresh_token,
+        }
+
+        response = JSONResponse(tokens)
+        response.set_cookie("refreshToken", refresh_token, secure=True, httponly=True)  # To protect Danger
+
+        return response
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid Username or Password"
+    )
 
 
 # refreshing Token
