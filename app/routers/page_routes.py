@@ -6,7 +6,7 @@ from fastapi_jwt_auth import AuthJWT
 page_router = APIRouter()
 
 templates = Jinja2Templates(
-    directory="app/templates"
+    directory="app/front/templates"
 )
 
 
@@ -18,3 +18,8 @@ async def index(request: Request):
 @page_router.get("/login")
 async def login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+
+@page_router.get("/signin")
+async def signin(request: Request):
+    return templates.TemplateResponse("signin.html", {"request": request})
