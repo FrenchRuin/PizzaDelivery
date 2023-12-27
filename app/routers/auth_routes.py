@@ -32,14 +32,20 @@ async def hello(authorize: AuthJWT = Depends()):
 
 
 @auth_router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(user: SignUpModel):
+async def signup(request: Request):
     """
     ## This Sign Up User
     It requires belong parameters
-    - username : "user"
+    - username : "username"
     - password : "password"
     """
-    db_email = session.query(User).filter(User.email == user.email).first()
+    signup_info = await request.form()
+    print(signup_info)
+    username = signup_info.get("username")
+    email = signup_info.get("email")
+    password = signup_info.get("password")
+
+    db_email = session.query(User).filter(User.email == email).first()
 
     if db_email is not None:
         return HTTPException(
@@ -47,7 +53,7 @@ async def signup(user: SignUpModel):
             detail="User with the email already exists"
         )
 
-    db_username = session.query(User).filter(User.username == user.username).first()
+    db_username = session.query(User).filter(User.username == username).first()
 
     if db_username is not None:
         return HTTPException(
@@ -56,11 +62,11 @@ async def signup(user: SignUpModel):
         )
 
     new_user = User(
-        username=user.username,
-        email=user.email,
-        password=generate_password_hash(user.password),
-        is_active=user.is_active,
-        is_staff=user.is_staff,
+        username=username,
+        email=email,
+        password=generate_password_hash(password),
+        is_active=True,
+        is_staff=False,
     )
 
     session.add(new_user)
@@ -94,7 +100,12 @@ async def login(request: Request, authorize: AuthJWT = Depends()):
         }
 
         response = JSONResponse(tokens)
-        response.set_cookie("refreshToken", refresh_token, secure=True, httponly=True)  # To protect Danger
+        response.set_cookie(
+            "refreshToken",
+            refresh_token,
+            secure=True,
+            httponly=True
+        )  # To protect Danger
 
         return response
 
